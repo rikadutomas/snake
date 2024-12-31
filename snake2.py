@@ -3,7 +3,7 @@ import pygame,sys,random
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 SNAKE_SIZE = 20
-FPS = 10
+FPS = 5
 
 BLUE = 'blue'
 WHITE = 'white'
@@ -56,10 +56,10 @@ class Game:
             self.clock.tick(self.fps)
             
 class Snake(pygame.sprite.Sprite):
-    def __init__(self,game):
+    def __init__(self,game,x=640,y=400):
         super().__init__()
-        self.x = 640
-        self.y = 400
+        self.x = x
+        self.y = y
         self.rect = pygame.draw.rect(game.screen,WHITE,((self.x,self.y),(SNAKE_SIZE,SNAKE_SIZE)))
         
     def move(self,direction):
