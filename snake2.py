@@ -18,42 +18,149 @@ class Game:
         self.screen.fill(BLUE)
         self.clock = pygame.time.Clock()
         self.fps = FPS
+        self.fps_paused = 0
         self.running = True
-        self.board = (11,101,WINDOW_WIDTH-22,WINDOW_HEIGHT - 122)
-        # pygame.draw.rect(self.screen,WHITE,(0,0,WINDOW_WIDTH,WINDOW_HEIGHT),1)
-        pygame.draw.rect(self.screen,WHITE,(10,100,WINDOW_WIDTH-20,WINDOW_HEIGHT-120),1)
+        self.board = (21,101,WINDOW_WIDTH-42,WINDOW_HEIGHT - 122)
+        pygame.draw.rect(self.screen,WHITE,(20,100,WINDOW_WIDTH-40,WINDOW_HEIGHT-120),1)
         self.snake_group = pygame.sprite.Group()
         self.person_group = pygame.sprite.Group()
         self.direction = 'RIGHT'
+        self.snake_array = []
+        self.prev_x = 0
+        self.prev_y = 0
+        self.font_score = pygame.font.Font('arcadeclassic.ttf',20)
+        self.font_arcade = pygame.font.Font('arcadeclassic.ttf',80)
+        self.font_arcade_small = pygame.font.Font('arcadeclassic.ttf',40)
+
+        self.sound_game_over = pygame.mixer.Sound('sounds/game-over.mp3')
+        self.music = pygame.mixer.music
+        self.music.load('sounds/game_music2.mp3')
+        self.music.set_volume(0.4)
+
+        font = self.font_arcade.render('Snake 2',True,GREEN)
+        font_rect = font.get_rect()
+        font_rect.center = (WINDOW_WIDTH//2,50)
+        self.screen.blit(font,font_rect)
+
+        self.count_person = 0
+        self.score = 0
+        self.level = 1
+
+        self.paused = False
         
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                pygame.quit()
+                sys.exit()
+
                 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_UP and self.direction in ['LEFT','RIGHT']:
                     self.direction = 'UP'
-                if event.key == pygame.K_DOWN:
+                if event.key == pygame.K_DOWN and self.direction in ['LEFT','RIGHT']:
                     self.direction = 'DOWN'
-                if event.key == pygame.K_LEFT:
+                if event.key == pygame.K_LEFT and self.direction in ['UP','DOWN']:
                     self.direction = 'LEFT'
-                if event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT and self.direction in ['UP','DOWN']:
                     self.direction = 'RIGHT'
+                if event.key == pygame.K_g:
+                    self.game_over()
+                if event.key == pygame.K_ESCAPE:
+                    if self.paused == False:
+                        self.music.pause()
+                        self.game_paused()
+                    else:
+                        self.music.unpause()
+                        self.paused = False
 
-    def run(self):
-        snake = Snake(self)
-        self.person = Person(self)
-        self.snake_group.add(snake)
-        # self.person_group.add(person)
+    def move_snakes(self):
+        for idx,snake in enumerate(self.snake_array):
+            if idx == 0:
+                (x,y) = snake.position()
+                self.prev_x = x
+                self.prev_y = y
+                match self.direction:
+                    case 'LEFT':
+                        x -= 20
+                    case 'RIGHT':
+                        x += 20
+                    case 'UP':
+                        y -= 20
+                    case 'DOWN':
+                        y += 20
+                snake.move(x,y)
+            else:
+                x = self.prev_x
+                y = self.prev_y
+                (self.prev_x,self.prev_y) = snake.position()
+                snake.move(x,y)
         
+    def game_over(self,msg=''):
+        font = self.font_arcade.render('GAME OVER',True,GREEN)
+        font_rect = font.get_rect()
+        font_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT//2)
+        self.screen.blit(font,font_rect)
+        
+        if msg:
+            font = self.font_arcade_small.render(msg,True,WHITE)
+            font_rect = font.get_rect()
+            font_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT//2 + 100)
+            self.screen.blit(font,font_rect)
+        
+        pygame.display.flip()
+        self.music.stop()
+        self.sound_game_over.play()
+
+        self.paused = True
+        while self.running:
+            self.events()
+
+    def game_paused(self):
+        font = self.font_arcade.render('PAUSE',True,GREEN)
+        font_rect = font.get_rect()
+        font_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT//2)
+        self.screen.blit(font,font_rect)
+        
+        pygame.display.flip()
+        self.paused = True
+        while self.paused:
+            self.events()
+        
+    def update_score(self):
+        self.screen.fill(BLUE,(20,70,200,30))
+        self.screen.fill(BLUE,(WINDOW_WIDTH-150,70,200,30))
+
+        str_level = 'Level  {}'.format(self.level)
+        str_score = 'Score  {}'.format(self.score)
+
+        level = self.font_score.render(str_level,True,WHITE)
+        level_rect = level.get_rect()
+        level_rect.topleft = (20,70)
+        self.screen.blit(level,level_rect)
+
+        level = self.font_score.render(str_score,True,WHITE)
+        level_rect = level.get_rect()
+        level_rect.topleft = (WINDOW_WIDTH - 150,70)
+        self.screen.blit(level,level_rect)
+
+    
+    def run(self):
+        Snake(self)
+        self.person = Person(self)
+        self.music.play(-1,0.0) 
         while self.running:
             self.screen.fill(BLUE,self.board,0)
             self.events()
-            self.snake_group.update(self.direction)
+            self.move_snakes()
             self.person_group.draw(self.screen)
+            self.update_score()
             pygame.display.flip()
-            self.clock.tick(self.fps)
+            if self.paused:
+                self.clock.tick(self.fps_paused)
+            else:
+                self.clock.tick(self.fps)
             
 class Snake(pygame.sprite.Sprite):
     def __init__(self,game,x=640,y=400):
@@ -61,33 +168,43 @@ class Snake(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.rect = pygame.draw.rect(game.screen,WHITE,((self.x,self.y),(SNAKE_SIZE,SNAKE_SIZE)))
-        
-    def move(self,direction):
-        match direction:
-            case 'LEFT':
-                self.x -= 20
-            case 'RIGHT':
-                self.x += 20
-            case 'UP':
-                self.y -= 20
-            case 'DOWN':
-                self.y += 20
-            case _:
-                print('No MATCH')
-        
+        game.snake_group.add(self)
+        game.snake_array.append(self)
+        self.sound_person = pygame.mixer.Sound('sounds/get_person.mp3')
+        self.sound_level = pygame.mixer.Sound('sounds/next_level.mp3')
+    
+    def move(self,x,y):
+        game.screen.fill(BLUE,(self.x,self.y,20,20),0)
+        self.x = x
+        self.y = y
         self.rect.move_ip(self.x,self.y)
         self.rect = pygame.draw.rect(game.screen,WHITE,((self.x,self.y),(SNAKE_SIZE,SNAKE_SIZE)))
+        self.check_collisions()
     
     def check_collisions(self):
         if pygame.sprite.spritecollide(self,game.person_group,True):
             game.screen.fill(BLUE,(game.person.x,game.person.y,20,20),0)
             game.person = Person(game)
+            self.sound_person.play()
+            Snake(game,game.prev_x,game.prev_y)
+            game.count_person += 1
+            if game.count_person % 5 == 0:
+                game.fps += 1
+                game.level += 1
+                self.sound_level.play()
+            game.score += game.level * game.count_person
             
-            
-        
-    def update(self,direction):
-        self.move(direction)
-        self.check_collisions()
+        if pygame.sprite.spritecollide(self,game.snake_group,False):
+            collide_group = pygame.sprite.spritecollide(self,game.snake_group,False)      
+            if collide_group[0] != self:
+                game.game_over('You have crashed  against  yourself')
+
+        if self.x < 21 or self.x > WINDOW_WIDTH-41 or self.y < 101 or self.y > WINDOW_HEIGHT - 41:
+            game.game_over('You  have crashed  against  the  wall')
+
+                   
+    def position(self):
+        return (self.x,self.y)
         
 
 class Person(pygame.sprite.Sprite):
@@ -100,7 +217,8 @@ class Person(pygame.sprite.Sprite):
         self.rect.topleft = (self.x,self.y)
         game.person_group.add(self)
 
-if __name__=='__main__':
+if __name__== '__main__':
+    pygame.init()
     game = Game()  
     game.run()
 
