@@ -72,8 +72,12 @@ class Game:
                     self.direction = 'LEFT'
                 if event.key == pygame.K_RIGHT and self.direction in ['UP','DOWN']:
                     self.direction = 'RIGHT'
-                if event.key == pygame.K_g:
-                    self.game_over()
+                if event.key == pygame.K_p:
+                    self.init()
+                if event.key == pygame.K_RETURN:
+                    self.running = False
+                    # game = Game()
+                    # game.init()
                 if event.key == pygame.K_ESCAPE:
                     if self.paused == False:
                         self.music.pause()
@@ -82,17 +86,23 @@ class Game:
                         self.music.unpause()
                         self.paused = False
     
-    def intro_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-                pygame.quit()
-                sys.exit()
+    # def intro_events(self):
+    #     for event in pygame.event.get():
+    #         if event.type == pygame.QUIT:
+    #             self.running = False
+    #             pygame.quit()
+    #             sys.exit()
                 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    self.music_intro.stop()
-                    self.run()
+    #         if event.type == pygame.KEYDOWN:
+    #             if event.key == pygame.K_p:
+    #                 self.music_intro.stop()
+    #                 del self
+    #                 Game().run()
+
+    #         if event.type == pygame.KEYDOWN:
+    #             if event.key == pygame.K_q:
+    #                 pygame.quit()
+    #                 sys.exit()
 
     def move_snakes(self):
         for idx,snake in enumerate(self.snake_array):
@@ -129,6 +139,11 @@ class Game:
             font_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT//2 + 100)
             self.screen.blit(font,font_rect)
         
+        data = self.font_arcade_small.render('Press   Enter   to   continue',True,GREEN)
+        data_rect = data.get_rect()
+        data_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT - 100)
+        self.screen.blit(data,data_rect)
+
         pygame.display.flip()
         self.music.stop()
         self.sound_game_over.play()
@@ -165,8 +180,8 @@ class Game:
         level_rect.topleft = (WINDOW_WIDTH - 150,70)
         self.screen.blit(level,level_rect)
 
-    def high_score(self):
-        pass 
+    # def high_score(self):
+    #     pass 
     
     def run(self):
         Snake(self)
@@ -180,88 +195,90 @@ class Game:
             self.person_group.draw(self.screen)
             self.update_score()
             pygame.display.flip()
-            self.high_score()
+            # self.high_score()
             if self.paused:
                 self.clock.tick(self.fps_paused)
             else:
                 self.clock.tick(self.fps)
 
-    def load_score_to_screen(self):
-        row = 150
-        quarter = WINDOW_WIDTH/6
-        self.data = dict(sorted(self.data.items(), key=lambda x:x[1],reverse=True))
-        for (key,value) in self.data.items():
-            data = self.font_arcade_small.render(key,True,WHITE)
-            data_rect = data.get_rect()
-            data_rect.topleft = (quarter*2, row)
-            self.screen.blit(data,data_rect)
+    # def load_score_to_screen(self):
+    #     row = 150
+    #     quarter = WINDOW_WIDTH/6
+    #     self.data = dict(sorted(self.data.items(), key=lambda x:x[1],reverse=True))
+    #     for (key,value) in self.data.items():
+    #         data = self.font_arcade_small.render(key,True,WHITE)
+    #         data_rect = data.get_rect()
+    #         data_rect.topleft = (quarter*2, row)
+    #         self.screen.blit(data,data_rect)
             
-            data = self.font_arcade_small.render(str(value),True,WHITE)
-            data_rect = data.get_rect()
-            data_rect.topleft = (quarter*3, row)
-            self.screen.blit(data,data_rect)
-            row += 50
+    #         data = self.font_arcade_small.render(str(value),True,WHITE)
+    #         data_rect = data.get_rect()
+    #         data_rect.topleft = (quarter*3, row)
+    #         self.screen.blit(data,data_rect)
+    #         row += 50
 
 
-        data = self.font_arcade_small.render('Press    P    to   start   playing',True,GREEN)
-        data_rect = data.get_rect()
-        data_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT - 100)
-        self.screen.blit(data,data_rect)
+    #     data = self.font_arcade_small.render('Press    P    to   start',True,GREEN)
+    #     data_rect = data.get_rect()
+    #     data_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT - 150)
+    #     self.screen.blit(data,data_rect)
+
+    #     data = self.font_arcade_small.render('Press    Q    to   exit',True,GREEN)
+    #     data_rect = data.get_rect()
+    #     data_rect.center = (WINDOW_WIDTH//2,WINDOW_HEIGHT - 100)
+    #     self.screen.blit(data,data_rect)
     
-    def run_intro_snake(self):
-        if self.random_counter == 0:
-            self.random_counter = random.randint(1,10)
-            leftright = random.randint(0,1)
-            if self.direction in ['LEFT','RIGHT'] :
-                self.direction = ['UP','DOWN'][leftright]
-            else:
-                self.direction = ['LEFT','RIGHT'][leftright]
-        print(self.random_counter)
-        print(self.direction)
-        for count in range(10):
-            match self.direction:
-                case 'LEFT':
-                    self.init_x-=20
-                case 'RIGHT':
-                    self.init_x+=20
-                case 'UP':
-                    self.init_y-=20
-                case 'DOWN':
-                    self.init_y+=20
-            if count==0:
-                pygame.draw.rect(self.screen,WHITE,(self.init_x,self.init_y,20,20))
-            else:
-                pass
-        self.random_counter-=1
+    # def run_intro_snake(self):
+    #     if self.random_counter == 0:
+    #         self.random_counter = random.randint(1,10)
+    #         leftright = random.randint(0,1)
+    #         if self.direction in ['LEFT','RIGHT'] :
+    #             self.direction = ['UP','DOWN'][leftright]
+    #         else:
+    #             self.direction = ['LEFT','RIGHT'][leftright]
+    #     print(self.random_counter)
+    #     print(self.direction)
+    #     for count in range(10):
+    #         match self.direction:
+    #             case 'LEFT':
+    #                 self.init_x-=20
+    #             case 'RIGHT':
+    #                 self.init_x+=20
+    #             case 'UP':
+    #                 self.init_y-=20
+    #             case 'DOWN':
+    #                 self.init_y+=20
+    #         if count==0:
+    #             pygame.draw.rect(self.screen,WHITE,(self.init_x,self.init_y,20,20))
+    #         else:
+    #             pass
+    #     self.random_counter-=1
 
-    def load_intro_screen(self):
-        self.screen.fill(BLUE,self.board,0)
-        self.run_intro_snake()
-        self.load_score_to_screen()
+    # def load_intro_screen(self):
+    #     self.screen.fill(BLUE,self.board,0)
+    #     self.run_intro_snake()
+    #     self.load_score_to_screen()
          
+    # def load_score(self):
+    #     if os.path.exists('score'):
+    #         with open('score', 'r') as openfile:
+    #             self.data = json.load(openfile)
 
-
-    def load_score(self):
-        if os.path.exists('score'):
-            with open('score', 'r') as openfile:
-                self.data = json.load(openfile)
-
-    def save_score(self):
-        json_object = json.dumps(self.data, indent=4)
-        with open('score', 'w') as outfile:
-            outfile.write(json_object)
+    # def save_score(self):
+    #     json_object = json.dumps(self.data, indent=4)
+    #     with open('score', 'w') as outfile:
+    #         outfile.write(json_object)
              
-
-    def init(self):
-        self.load_score()
-        self.music_intro.play(-1,0.0)
-        while True:
+    # def init(self):
+    #     self.load_score()
+    #     self.music_intro.play(-1,0.0)
+    #     while True:
             
-            self.load_intro_screen()
-            self.intro_events()
-            pygame.display.flip()
+    #         self.load_intro_screen()
+    #         self.intro_events()
+    #         pygame.display.flip()
         
-        self.save_score()
+    #     self.save_score()
             
 class Snake(pygame.sprite.Sprite):
     def __init__(self,game,x=640,y=400):
@@ -319,11 +336,25 @@ class Person(pygame.sprite.Sprite):
         game.person_group.add(self)
 
 
+    
 
 if __name__== '__main__':
     pygame.init()
-    game = Game()
-    game.init()
+    screen = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
+    game_on = True
+    while game_on:
+        screen.fill(BLUE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_on = False
+                pygame.quit()
+                sys.exit()
+                
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    game = Game()
+                    game.run()
+        pygame.display.flip()
 
 
  
