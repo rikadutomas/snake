@@ -71,38 +71,51 @@ class RandSnake(Main):
         self.previous_y = 0
         self.count = 0
         self.direction = 'RIGHT'
+        self.collision = ''
 
     def run(self):
         for snake in range(20):
+            test = [snake]
             if snake==0:
+                idx = random.randint(0,1)
                 if self.count == 0:
                     self.count = random.randint(1,20)
-                    idx = random.randint(0,1)
                     if self.direction in ['LEFT','RIGHT']:
-                        self.direction = ['UP','DOWN'][idx]
+                            self.direction = ['UP','DOWN'][idx]
                     else:
                         self.direction = ['LEFT','RIGHT'][idx]
-                
-                if self.x < 40:
-                    if self.y < WINDOW_HEIGHT_CENTER:
-                        self.direction = 'DOWN'
-                    else:
-                        self.direction = 'UP'
-                if self.x > WINDOW_WIDTH - 40:
-                    if self.y < WINDOW_HEIGHT_CENTER:
-                        self.direction = 'DOWN'
-                    else:
-                        self.direction = 'UP'
-                if self.y < 40:
-                    if self.x < WINDOW_WIDTH_CENTER:
-                        self.direction = 'RIGHT'
-                    else:
-                        self.direction = 'LEFT'
-                if self.y > WINDOW_HEIGHT - 40:
-                    if self.x < WINDOW_WIDTH_CENTER:
-                        self.direction = 'RIGHT'
-                    else:
-                        self.direction = 'LEFT'
+                    
+                if self.collision !='':
+                    self.direction = self.collision
+                    self.collision = ''
+                else:
+                    if self.x < 40:
+                        self.collision = 'RIGHT'
+                        if self.y < WINDOW_HEIGHT_CENTER:
+                            self.direction = 'DOWN'
+                        else:
+                            self.direction = 'UP'
+                    if self.x > WINDOW_WIDTH - 40:
+                        self.collision = 'LEFT'
+                        if self.y < WINDOW_HEIGHT_CENTER:
+                            self.direction = 'DOWN'
+                        else:
+                            self.direction = 'UP'
+                    if self.y < 40:
+                        self.collision = 'DOWN'
+                        if self.x < WINDOW_WIDTH_CENTER:
+                            self.direction = 'RIGHT'
+                        else:
+                            self.direction = 'LEFT'
+                    if self.y > WINDOW_HEIGHT - 40:
+                        self.collision = 'UP'
+                        if self.x < WINDOW_WIDTH_CENTER:
+                            self.direction = 'RIGHT'
+                        else:
+                            self.direction = 'LEFT'
+                test.append((self.previous_x,self.previous_y))
+                self.previous_x = self.x
+                self.previous_y = self.y
 
                 match self.direction:
                     case 'LEFT':
@@ -113,10 +126,18 @@ class RandSnake(Main):
                         self.y-=20
                     case 'DOWN':
                         self.y+=20
-                
-                pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
                 self.count-=1
-        
+                print(self.count)          
+            else:
+                test.append((self.previous_x,self.previous_y))
+                self.x = self.previous_x
+                self.y = self.previous_y
+
+            test.append((self.x,self.y))
+            pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
+            print(test)
+
+    
 
 class Keys(Main):
     def __init__(self):
