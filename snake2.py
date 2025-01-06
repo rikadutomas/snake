@@ -65,17 +65,19 @@ class Main:
 class RandSnake(Main):
     def __init__(self):
         super().__init__()
+        self.memory = [None]*21
+        self.first_run = True
         self.x = WINDOW_WIDTH_CENTER
         self.y = WINDOW_HEIGHT_CENTER
-        self.previous_x = 0
-        self.previous_y = 0
         self.count = 0
         self.direction = 'RIGHT'
         self.collision = ''
-
+    
     def run(self):
         for snake in range(20):
-            test = [snake]
+            # test = [snake]
+            # if self.first_run:
+            #     self.memory[]
             if snake==0:
                 idx = random.randint(0,1)
                 if self.count == 0:
@@ -113,9 +115,8 @@ class RandSnake(Main):
                             self.direction = 'RIGHT'
                         else:
                             self.direction = 'LEFT'
-                test.append((self.previous_x,self.previous_y))
-                self.previous_x = self.x
-                self.previous_y = self.y
+                # test.append((self.previous_x,self.previous_y))
+                self.memory[snake+1] = (self.x,self.y)
 
                 match self.direction:
                     case 'LEFT':
@@ -129,13 +130,22 @@ class RandSnake(Main):
                 self.count-=1
                 print(self.count)          
             else:
-                test.append((self.previous_x,self.previous_y))
-                self.x = self.previous_x
-                self.y = self.previous_y
+                # test.append((self.previous_x,self.previous_y))
+                if self.first_run:
+                    self.x = WINDOW_WIDTH_CENTER - (snake*20)
+                    self.y = WINDOW_HEIGHT_CENTER
+                    self.memory[snake+1] = (self.x,self.y)
+                    (self.x,self.y) = self.memory[snake]
 
-            test.append((self.x,self.y))
+                else:
+                    self.memory[snake+1] = (self.x,self.y)
+                    (self.x,self.y) = self.memory[snake]
+
+            # test.append((self.x,self.y))
             pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
-            print(test)
+            if self.first_run and snake==19:
+                self.first_run=False
+            # print(test)
 
     
 
