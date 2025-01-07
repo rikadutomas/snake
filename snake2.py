@@ -74,78 +74,75 @@ class RandSnake(Main):
         self.collision = ''
     
     def run(self):
-        for snake in range(20):
-            # test = [snake]
-            # if self.first_run:
-            #     self.memory[]
-            if snake==0:
-                idx = random.randint(0,1)
-                if self.count == 0:
-                    self.count = random.randint(1,20)
-                    if self.direction in ['LEFT','RIGHT']:
-                            self.direction = ['UP','DOWN'][idx]
+        if self.first_run:
+            for snake in range(20):
+                self.x = WINDOW_WIDTH_CENTER - (20*snake)
+                self.y = WINDOW_HEIGHT_CENTER
+                pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
+                self.memory[snake] = (self.x,self.y) 
+            self.first_run = False
+        else:
+            for snake in range(20):
+                if snake==0:
+                    idx = random.randint(0,1)
+                    if self.count == 0:
+                        self.count = random.randint(1,20)
+                        if self.direction in ['LEFT','RIGHT']:
+                                self.direction = ['UP','DOWN'][idx]
+                        else:
+                            self.direction = ['LEFT','RIGHT'][idx]
+                        
+                    if self.collision !='':
+                        self.direction = self.collision
+                        self.collision = ''
                     else:
-                        self.direction = ['LEFT','RIGHT'][idx]
-                    
-                if self.collision !='':
-                    self.direction = self.collision
-                    self.collision = ''
-                else:
-                    if self.x < 40:
-                        self.collision = 'RIGHT'
-                        if self.y < WINDOW_HEIGHT_CENTER:
-                            self.direction = 'DOWN'
-                        else:
-                            self.direction = 'UP'
-                    if self.x > WINDOW_WIDTH - 40:
-                        self.collision = 'LEFT'
-                        if self.y < WINDOW_HEIGHT_CENTER:
-                            self.direction = 'DOWN'
-                        else:
-                            self.direction = 'UP'
-                    if self.y < 40:
-                        self.collision = 'DOWN'
-                        if self.x < WINDOW_WIDTH_CENTER:
-                            self.direction = 'RIGHT'
-                        else:
-                            self.direction = 'LEFT'
-                    if self.y > WINDOW_HEIGHT - 40:
-                        self.collision = 'UP'
-                        if self.x < WINDOW_WIDTH_CENTER:
-                            self.direction = 'RIGHT'
-                        else:
-                            self.direction = 'LEFT'
-                # test.append((self.previous_x,self.previous_y))
-                self.memory[snake+1] = (self.x,self.y)
+                        if self.x < 40:
+                            self.collision = 'RIGHT'
+                            if self.y < WINDOW_HEIGHT_CENTER:
+                                self.direction = 'DOWN'
+                            else:
+                                self.direction = 'UP'
+                        if self.x > WINDOW_WIDTH - 40:
+                            self.collision = 'LEFT'
+                            if self.y < WINDOW_HEIGHT_CENTER:
+                                self.direction = 'DOWN'
+                            else:
+                                self.direction = 'UP'
+                        if self.y < 40:
+                            self.collision = 'DOWN'
+                            if self.x < WINDOW_WIDTH_CENTER:
+                                self.direction = 'RIGHT'
+                            else:
+                                self.direction = 'LEFT'
+                        if self.y > WINDOW_HEIGHT - 40:
+                            self.collision = 'UP'
+                            if self.x < WINDOW_WIDTH_CENTER:
+                                self.direction = 'RIGHT'
+                            else:
+                                self.direction = 'LEFT'
 
-                match self.direction:
-                    case 'LEFT':
-                        self.x-=20
-                    case 'RIGHT':
-                        self.x+=20
-                    case 'UP':
-                        self.y-=20
-                    case 'DOWN':
-                        self.y+=20
-                self.count-=1
-                print(self.count)          
-            else:
-                # test.append((self.previous_x,self.previous_y))
-                if self.first_run:
-                    self.x = WINDOW_WIDTH_CENTER - (snake*20)
-                    self.y = WINDOW_HEIGHT_CENTER
+                    # self.memory[snake+1] = self.memory[snake]
+                    match self.direction:
+                        case 'LEFT':
+                            self.x-=20
+                        case 'RIGHT':
+                            self.x+=20
+                        case 'UP':
+                            self.y-=20
+                        case 'DOWN':
+                            self.y+=20
+                    self.count-=1
+                    pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
                     self.memory[snake+1] = (self.x,self.y)
-                    (self.x,self.y) = self.memory[snake]
+                    print(self.count)
 
                 else:
-                    self.memory[snake+1] = (self.x,self.y)
+                    # test.append((self.previous_x,self.previous_y))
+                    self.memory[snake+1] = self.memory[snake]
                     (self.x,self.y) = self.memory[snake]
+                    pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
+        print(self.memory)
 
-            # test.append((self.x,self.y))
-            pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
-            if self.first_run and snake==19:
-                self.first_run=False
-            # print(test)
 
     
 
