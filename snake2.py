@@ -65,7 +65,7 @@ class Main:
 class RandSnake(Main):
     def __init__(self):
         super().__init__()
-        self.memory = [None]*21
+        self.memory = []
         self.first_run = True
         self.x = WINDOW_WIDTH_CENTER
         self.y = WINDOW_HEIGHT_CENTER
@@ -79,11 +79,12 @@ class RandSnake(Main):
                 self.x = WINDOW_WIDTH_CENTER - (20*snake)
                 self.y = WINDOW_HEIGHT_CENTER
                 pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
-                self.memory[snake] = (self.x,self.y) 
+                self.memory.append((self.x,self.y))
             self.first_run = False
         else:
             for snake in range(20):
                 if snake==0:
+                    (self.x,self.y) = self.memory[snake]
                     idx = random.randint(0,1)
                     if self.count == 0:
                         self.count = random.randint(1,20)
@@ -121,7 +122,9 @@ class RandSnake(Main):
                             else:
                                 self.direction = 'LEFT'
 
-                    # self.memory[snake+1] = self.memory[snake]
+                    for idx in range(len(self.memory)-1,-1,-1):
+                        self.memory[idx] = self.memory[idx-1]
+
                     match self.direction:
                         case 'LEFT':
                             self.x-=20
@@ -133,18 +136,11 @@ class RandSnake(Main):
                             self.y+=20
                     self.count-=1
                     pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
-                    self.memory[snake+1] = (self.x,self.y)
-                    print(self.count)
+                    self.memory[snake] = (self.x,self.y)
 
                 else:
-                    # test.append((self.previous_x,self.previous_y))
-                    self.memory[snake+1] = self.memory[snake]
                     (self.x,self.y) = self.memory[snake]
                     pygame.draw.rect(self.surface,WHITE,((self.x,self.y),SNAKE_SIZE))
-        print(self.memory)
-
-
-    
 
 class Keys(Main):
     def __init__(self):
