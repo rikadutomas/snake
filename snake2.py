@@ -48,14 +48,16 @@ class Main:
 
     def screen(self):
         self.surface.fill(BLUE)
-        self.randsnake.run()
+        self.randsnake.run(self.window_width,self.window_height)
         self.render_text('SNAKE',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,100))
         self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,100))
-        self.scoreboard.show()
+        self.scoreboard.show(self.window_width_center)
         self.render_text('Press   P   to   play',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 180))
         self.render_text('Press   K   to   define   keys',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 140))
         self.render_text('Press   F   to   toggle   full   screen',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 100))
         self.render_text('Press   Q   to   quit',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 60))
+
+
 
 
     def render_text(self,text,font,color,position,coord):
@@ -75,6 +77,8 @@ class Main:
             self.window_height_center = self.window_height // 2
             self.surface = pygame.display.set_mode((self.window_width,self.window_height))
             self.fullscreen = False
+            print('=== WINDOWED ===')
+
         else:
             self.window_width = SCREEN_WIDTH
             self.window_height = SCREEN_HEIGHT
@@ -82,6 +86,9 @@ class Main:
             self.window_height_center = self.window_height // 2
             self.surface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
             self.fullscreen = True
+            print('=== FULL SCREEN ===')
+
+        self.screen()
     
     def events(self):
         for event in pygame.event.get():
@@ -89,7 +96,7 @@ class Main:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    self.game = Game(self.surface,self.fullscreen)
+                    self.game = Game(self.surface)
                     self.game.run()
                 if event.key == pygame.K_k:
                     keys = Keys()
@@ -104,9 +111,9 @@ class ScoreBoard(Main):
         super().__init__()
         self.score_array = []
     
-    def show(self):
-        x_user = (self.window_width/13)*5
-        x_score = (self.window_width/13)*7
+    def show(self,width_center):
+        x_user = width_center - 170
+        x_score = width_center + 40
         y_score = 150
         for [user,score] in self.score_array:
             self.render_text(user,self.font_score,GREEN,'TOPLEFT',(x_user,y_score))
@@ -137,11 +144,13 @@ class RandSnake(Main):
         self.collision = ''
         self.color = WHITE
     
-    def run(self):
+    def run(self,window_width,window_height):
+        window_width_center = window_width//2
+        window_height_center = window_height//2
         if self.first_run:
             for snake in range(20):
-                self.x = self.window_width_center - (20*snake)
-                self.y = self.window_height_center
+                self.x = window_width_center - (20*snake)
+                self.y = window_height_center
                 pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_SIZE))
                 self.memory.append((self.x,self.y))
             self.first_run = False
@@ -163,25 +172,25 @@ class RandSnake(Main):
                     else:
                         if self.x < 40:
                             self.collision = 'RIGHT'
-                            if self.y < self.window_height_center:
+                            if self.y < window_height_center:
                                 self.direction = 'DOWN'
                             else:
                                 self.direction = 'UP'
-                        if self.x > self.window_width - 40:
+                        if self.x > window_width - 40:
                             self.collision = 'LEFT'
-                            if self.y < self.window_height_center:
+                            if self.y < window_height_center:
                                 self.direction = 'DOWN'
                             else:
                                 self.direction = 'UP'
                         if self.y < 40:
                             self.collision = 'DOWN'
-                            if self.x < self.window_width_center:
+                            if self.x < window_width_center:
                                 self.direction = 'RIGHT'
                             else:
                                 self.direction = 'LEFT'
-                        if self.y > self.window_height - 40:
+                        if self.y > window_height - 40:
                             self.collision = 'UP'
-                            if self.x < self.window_width_center:
+                            if self.x < window_width_center:
                                 self.direction = 'RIGHT'
                             else:
                                 self.direction = 'LEFT'
@@ -214,10 +223,12 @@ class Keys(Main):
 
 
 class Game(Main,pygame.sprite.Sprite):
-    def __init__(self,fullscreen):
+    def __init__(self,surface):
         super().__init__()
+        # self.fullscreen = fullscreen
         self.gameon = True
-        self.fullscreen = fullscreen
+        self.snake_size = 20
+        self.surface = surface
 
     def events(self):
         for event in pygame.event.get():
@@ -235,7 +246,20 @@ class Game(Main,pygame.sprite.Sprite):
                 if event.key == pygame.K_q:
                     self.gameon = False
 
+    # def screen_set(self):
+    #     if self.fullscreen:
+    #         self.surface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
+    #         self.window_width = SCREEN_WIDTH
+    #         self.window_height = SCREEN_HEIGHT
+    #     else:
+    #         self.surface = pygame.display.set_mode((DEFAULT_WINDOW_WIDTH,DEFAULT_WINDOW_HEIGHT))
+    #         self.window_width = DEFAULT_WINDOW_WIDTH
+    #         self.window_height = DEFAULT_WINDOW_HEIGHT
+    
     def run(self):
+        # self.screen_set()
+        # print(self.window_width)
+        # print(self.window_height)
         self.surface.fill(BLUE)
         pygame.draw.rect(self.surface,YELLOW,((20,100),(self.window_width-40,self.window_height-120)),1)
 
