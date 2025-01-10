@@ -1,12 +1,15 @@
-import pygame,sys,random,os,json
+import pygame
+import sys,random,os,json
+pygame.init()
 
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
-WINDOW_WIDTH_CENTER = WINDOW_WIDTH//2
-WINDOW_HEIGHT_CENTER = WINDOW_HEIGHT//2
+SCREEN_WIDTH = pygame.display.Info().current_w
+SCREEN_HEIGHT = pygame.display.Info().current_h
+DEFAULT_WINDOW_WIDTH = 1280
+DEFAULT_WINDOW_HEIGHT = 720
 SNAKE_SIZE = (20,20)
 FPS = 5
 
+BLACK = 'black'
 BLUE = 'blue'
 WHITE = 'white'
 GREEN = 'green'
@@ -16,13 +19,21 @@ class Main:
     def __init__(self):
         self.fps = FPS
         self.clock = pygame.time.Clock()
-        self.surface = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
+        self.fullscreen = False
+        self.window_width = DEFAULT_WINDOW_WIDTH
+        self.window_height = DEFAULT_WINDOW_HEIGHT
+        self.window_width_center = self.window_width // 2
+        self.window_height_center = self.window_height // 2
+        self.surface = pygame.display.set_mode((self.window_width,self.window_height))
         pygame.display.set_caption('Snake')
         self.font_title = pygame.font.Font('fonts/arcadeclassic.ttf',80)
+        self.font_title_outline = pygame.font.Font('fonts/arcadeclassic.ttf',86)
         self.font_score = pygame.font.Font('fonts/arcadeclassic.ttf',40)
         self.running = True
+        
 
     def run(self):
+        
         self.randsnake = RandSnake()
         self.scoreboard = ScoreBoard()
         self.scoreboard.load()
@@ -38,11 +49,13 @@ class Main:
     def screen(self):
         self.surface.fill(BLUE)
         self.randsnake.run()
-        self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(WINDOW_WIDTH_CENTER,100))
+        self.render_text('SNAKE',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,100))
+        self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,100))
         self.scoreboard.show()
-        self.render_text('Press   P   to   play',self.font_score,YELLOW,'CENTER',(WINDOW_WIDTH_CENTER,WINDOW_HEIGHT - 180))
-        self.render_text('Press   K   to   define   keys',self.font_score,YELLOW,'CENTER',(WINDOW_WIDTH_CENTER,WINDOW_HEIGHT - 120))
-        self.render_text('Press   Q   to   quit',self.font_score,YELLOW,'CENTER',(WINDOW_WIDTH_CENTER,WINDOW_HEIGHT - 60))
+        self.render_text('Press   P   to   play',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 180))
+        self.render_text('Press   K   to   define   keys',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 140))
+        self.render_text('Press   F   to   toggle   full   screen',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 100))
+        self.render_text('Press   Q   to   quit',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 60))
 
 
     def render_text(self,text,font,color,position,coord):
@@ -54,19 +67,37 @@ class Main:
             text_rect.topleft = coord
         self.surface.blit(text,text_rect)
 
+    def toggle_fullscreen(self):
+        if self.fullscreen:
+            self.window_width = DEFAULT_WINDOW_WIDTH
+            self.window_height = DEFAULT_WINDOW_HEIGHT
+            self.window_width_center = self.window_width // 2
+            self.window_height_center = self.window_height // 2
+            self.surface = pygame.display.set_mode((self.window_width,self.window_height))
+            self.fullscreen = False
+        else:
+            self.window_width = SCREEN_WIDTH
+            self.window_height = SCREEN_HEIGHT
+            self.window_width_center = self.window_width // 2
+            self.window_height_center = self.window_height // 2
+            self.surface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
+            self.fullscreen = True
+    
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    game = Game()
-                    game.run()
+                    self.game = Game(self.surface,self.fullscreen)
+                    self.game.run()
                 if event.key == pygame.K_k:
                     keys = Keys()
                     keys.run()
                 if event.key == pygame.K_q:
                     self.running = False
+                if event.key == pygame.K_f:
+                    self.toggle_fullscreen()
 
 class ScoreBoard(Main):
     def __init__(self):
@@ -74,8 +105,8 @@ class ScoreBoard(Main):
         self.score_array = []
     
     def show(self):
-        x_user = (WINDOW_WIDTH/13)*5
-        x_score = (WINDOW_WIDTH/13)*7
+        x_user = (self.window_width/13)*5
+        x_score = (self.window_width/13)*7
         y_score = 150
         for [user,score] in self.score_array:
             self.render_text(user,self.font_score,GREEN,'TOPLEFT',(x_user,y_score))
@@ -94,15 +125,13 @@ class ScoreBoard(Main):
             json.dump(self.score_array,outfile)
             outfile.close()
     
-
-
 class RandSnake(Main):
     def __init__(self):
         super().__init__()
         self.memory = []
         self.first_run = True
-        self.x = WINDOW_WIDTH_CENTER
-        self.y = WINDOW_HEIGHT_CENTER
+        self.x = self.window_width_center
+        self.y = self.window_height_center
         self.count = 0
         self.direction = 'RIGHT'
         self.collision = ''
@@ -111,8 +140,8 @@ class RandSnake(Main):
     def run(self):
         if self.first_run:
             for snake in range(20):
-                self.x = WINDOW_WIDTH_CENTER - (20*snake)
-                self.y = WINDOW_HEIGHT_CENTER
+                self.x = self.window_width_center - (20*snake)
+                self.y = self.window_height_center
                 pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_SIZE))
                 self.memory.append((self.x,self.y))
             self.first_run = False
@@ -134,25 +163,25 @@ class RandSnake(Main):
                     else:
                         if self.x < 40:
                             self.collision = 'RIGHT'
-                            if self.y < WINDOW_HEIGHT_CENTER:
+                            if self.y < self.window_height_center:
                                 self.direction = 'DOWN'
                             else:
                                 self.direction = 'UP'
-                        if self.x > WINDOW_WIDTH - 40:
+                        if self.x > self.window_width - 40:
                             self.collision = 'LEFT'
-                            if self.y < WINDOW_HEIGHT_CENTER:
+                            if self.y < self.window_height_center:
                                 self.direction = 'DOWN'
                             else:
                                 self.direction = 'UP'
                         if self.y < 40:
                             self.collision = 'DOWN'
-                            if self.x < WINDOW_WIDTH_CENTER:
+                            if self.x < self.window_width_center:
                                 self.direction = 'RIGHT'
                             else:
                                 self.direction = 'LEFT'
-                        if self.y > WINDOW_HEIGHT - 40:
+                        if self.y > self.window_height - 40:
                             self.collision = 'UP'
-                            if self.x < WINDOW_WIDTH_CENTER:
+                            if self.x < self.window_width_center:
                                 self.direction = 'RIGHT'
                             else:
                                 self.direction = 'LEFT'
@@ -184,15 +213,39 @@ class Keys(Main):
         print('Keys Screen')
 
 
-class Game(pygame.sprite.Sprite):
-    def __init__(self, *groups):
-        super().__init__(*groups)
+class Game(Main,pygame.sprite.Sprite):
+    def __init__(self,fullscreen):
+        super().__init__()
+        self.gameon = True
+        self.fullscreen = fullscreen
+
+    def events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.gameon = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    pass
+                if event.key == pygame.K_DOWN:
+                    pass
+                if event.key == pygame.K_LEFT:
+                    pass
+                if event.key == pygame.K_RIGHT:
+                    pass
+                if event.key == pygame.K_q:
+                    self.gameon = False
 
     def run(self):
-        print('Im Running Game')  
+        self.surface.fill(BLUE)
+        pygame.draw.rect(self.surface,YELLOW,((20,100),(self.window_width-40,self.window_height-120)),1)
+
+        while self.gameon:
+            self.events()
+            pygame.display.flip() 
 
 if __name__== '__main__':
-    pygame.init()
+    print(SCREEN_WIDTH)
+    print(SCREEN_HEIGHT)
     main = Main()
     main.run()
 
