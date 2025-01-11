@@ -96,8 +96,8 @@ class Main:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    self.game = Game(self.surface)
-                    self.game.run()
+                    self.game = Game()
+                    self.game.run(self.surface)
                 if event.key == pygame.K_k:
                     keys = Keys()
                     keys.run()
@@ -221,14 +221,12 @@ class Keys(Main):
     def run(self):
         print('Keys Screen')
 
-
-class Game(Main,pygame.sprite.Sprite):
-    def __init__(self,surface):
+class Game(pygame.sprite.Sprite):
+    def __init__(self):
         super().__init__()
-        # self.fullscreen = fullscreen
         self.gameon = True
         self.snake_size = 20
-        self.surface = surface
+        self.surface = ''
 
     def events(self):
         for event in pygame.event.get():
@@ -245,31 +243,17 @@ class Game(Main,pygame.sprite.Sprite):
                     pass
                 if event.key == pygame.K_q:
                     self.gameon = False
-
-    # def screen_set(self):
-    #     if self.fullscreen:
-    #         self.surface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
-    #         self.window_width = SCREEN_WIDTH
-    #         self.window_height = SCREEN_HEIGHT
-    #     else:
-    #         self.surface = pygame.display.set_mode((DEFAULT_WINDOW_WIDTH,DEFAULT_WINDOW_HEIGHT))
-    #         self.window_width = DEFAULT_WINDOW_WIDTH
-    #         self.window_height = DEFAULT_WINDOW_HEIGHT
     
-    def run(self):
-        # self.screen_set()
-        # print(self.window_width)
-        # print(self.window_height)
+    def run(self,surface):
+        self.surface = surface
+        self.surface.
         self.surface.fill(BLUE)
-        pygame.draw.rect(self.surface,YELLOW,((20,100),(self.window_width-40,self.window_height-120)),1)
-
         while self.gameon:
             self.events()
             pygame.display.flip() 
 
+
 if __name__== '__main__':
-    print(SCREEN_WIDTH)
-    print(SCREEN_HEIGHT)
     main = Main()
     main.run()
 
