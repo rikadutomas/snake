@@ -15,8 +15,9 @@ WHITE = 'white'
 GREEN = 'green'
 YELLOW = 'yellow'
 
-class Main:
+class Main(pygame.sprite.Sprite):
     def __init__(self):
+        super().__init__()
         self.fps = FPS
         self.clock = pygame.time.Clock()
         self.fullscreen = False
@@ -33,14 +34,14 @@ class Main:
         
 
     def run(self):
-        
         self.randsnake = RandSnake()
         self.scoreboard = ScoreBoard()
         self.scoreboard.load()
         while self.running:
-            self.screen()
             self.events()
-            pygame.display.flip()
+            self.screen()
+            
+            pygame.display.update()
             self.clock.tick(self.fps)
         self.scoreboard.save()
         pygame.quit()
@@ -75,10 +76,8 @@ class Main:
             self.window_height = DEFAULT_WINDOW_HEIGHT
             self.window_width_center = self.window_width // 2
             self.window_height_center = self.window_height // 2
-            self.surface = pygame.display.set_mode((self.window_width,self.window_height))
+            self.surface = pygame.display.set_mode((1280,720))
             self.fullscreen = False
-            print('=== WINDOWED ===')
-
         else:
             self.window_width = SCREEN_WIDTH
             self.window_height = SCREEN_HEIGHT
@@ -86,9 +85,11 @@ class Main:
             self.window_height_center = self.window_height // 2
             self.surface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
             self.fullscreen = True
-            print('=== FULL SCREEN ===')
 
-        self.screen()
+        pygame.display.update()
+        print(pygame.display.Info().current_w)
+        print(pygame.display.Info().current_h)
+        # self.screen()
     
     def events(self):
         for event in pygame.event.get():
@@ -96,8 +97,8 @@ class Main:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
-                    self.game = Game()
-                    self.game.run(self.surface)
+                    self.game = Game(self.surface,self.fullscreen)
+                    self.game.run()
                 if event.key == pygame.K_k:
                     keys = Keys()
                     keys.run()
@@ -221,12 +222,18 @@ class Keys(Main):
     def run(self):
         print('Keys Screen')
 
-class Game(pygame.sprite.Sprite):
-    def __init__(self):
+class Game(Main):
+    def __init__(self,surface,fullscreen):
         super().__init__()
         self.gameon = True
         self.snake_size = 20
-        self.surface = ''
+        self.surface = surface
+        self.fullscreen = fullscreen
+        self.window_width = pygame.display.Info().current_w
+        self.window_height = pygame.display.Info().current_h
+        self.window_width_center = self.window_width//2
+        self.window_height_center = self.window_height//2
+
 
     def events(self):
         for event in pygame.event.get():
@@ -244,13 +251,19 @@ class Game(pygame.sprite.Sprite):
                 if event.key == pygame.K_q:
                     self.gameon = False
     
-    def run(self,surface):
-        self.surface = surface
-        self.surface.
+    def screen(self):
         self.surface.fill(BLUE)
+        if self.fullscreen:
+            self.board = pygame.draw.rect(self.surface,YELLOW,((self.window_width_center - 620,self.window_height_center - 300),(1240,600)),1)
+        else:
+            self.board = pygame.draw.rect(self.surface,YELLOW,((20,100),(self.window_width-40,self.window_height-120)),1)
+
+    
+    def run(self):
         while self.gameon:
+            self.screen()
             self.events()
-            pygame.display.flip() 
+            pygame.display.flip()
 
 
 if __name__== '__main__':
