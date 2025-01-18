@@ -4,8 +4,8 @@ pygame.init()
 
 SCREEN_WIDTH = pygame.display.Info().current_w
 SCREEN_HEIGHT = pygame.display.Info().current_h
-DEFAULT_WINDOW_WIDTH = 1280
-DEFAULT_WINDOW_HEIGHT = 720
+DEFAULT_WINDOW_WIDTH = 1280//2
+DEFAULT_WINDOW_HEIGHT = 720//2
 SNAKE_SIZE = (20,20)
 FPS = 5
 
@@ -23,9 +23,10 @@ class Main(pygame.sprite.Sprite):
         self.fullscreen = False
         self.window_width = DEFAULT_WINDOW_WIDTH
         self.window_height = DEFAULT_WINDOW_HEIGHT
+        self.last_size = (self.window_width,self.window_height)
         self.window_width_center = self.window_width // 2
         self.window_height_center = self.window_height // 2
-        self.surface = pygame.display.set_mode((self.window_width,self.window_height))
+        self.surface = pygame.display.set_mode((self.window_width,self.window_height),pygame.WINDOWMAXIMIZED)
         pygame.display.set_caption('Snake')
         self.font_title = pygame.font.Font('fonts/arcadeclassic.ttf',80)
         self.font_title_outline = pygame.font.Font('fonts/arcadeclassic.ttf',86)
@@ -58,9 +59,6 @@ class Main(pygame.sprite.Sprite):
         self.render_text('Press   F   to   toggle   full   screen',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 100))
         self.render_text('Press   Q   to   quit',self.font_score,YELLOW,'CENTER',(self.window_width_center,self.window_height - 60))
 
-
-
-
     def render_text(self,text,font,color,position,coord):
         text = font.render(text,True,color)
         text_rect = text.get_rect()
@@ -72,29 +70,43 @@ class Main(pygame.sprite.Sprite):
 
     def toggle_fullscreen(self):
         if self.fullscreen:
-            self.window_width = DEFAULT_WINDOW_WIDTH
-            self.window_height = DEFAULT_WINDOW_HEIGHT
-            self.window_width_center = self.window_width // 2
-            self.window_height_center = self.window_height // 2
-            self.surface = pygame.display.set_mode((1280,720))
             self.fullscreen = False
+            if pygame.display.is_fullscreen() == True:
+                pygame.display.toggle_fullscreen()
+            self.update_video()
         else:
+            self.fullscreen = True
+            if pygame.display.is_fullscreen() == False:
+                pygame.display.toggle_fullscreen()
+            self.update_video()
+
+    def update_video(self, width = 0, height = 0):
+        if width > 0:
+            if width < DEFAULT_WINDOW_WIDTH or height < DEFAULT_WINDOW_HEIGHT:
+                self.window_width = DEFAULT_WINDOW_WIDTH
+                self.window_height = DEFAULT_WINDOW_HEIGHT 
+            else:
+                self.window_width = width
+                self.window_height = height
+            self.last_size = (self.window_width,self.window_height)
+        if self.fullscreen:
             self.window_width = SCREEN_WIDTH
             self.window_height = SCREEN_HEIGHT
-            self.window_width_center = self.window_width // 2
-            self.window_height_center = self.window_height // 2
-            self.surface = pygame.display.set_mode((0,0),pygame.FULLSCREEN)
-            self.fullscreen = True
-
+            self.surface = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT),pygame.FULLSCREEN)
+        else:
+            (self.window_width,self.window_height) = self.last_size
+            self.surface = pygame.display.set_mode(self.last_size,pygame.RESIZABLE)
         pygame.display.update()
-        print(pygame.display.Info().current_w)
-        print(pygame.display.Info().current_h)
-        # self.screen()
-    
+        self.window_width_center = self.window_width//2
+        self.window_height_center = self.window_height//2
+        
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            if event.type == pygame.VIDEORESIZE:
+                if not self.fullscreen:
+                    self.update_video(event.w,event.h)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     self.game = Game(self.surface,self.fullscreen)
@@ -127,7 +139,6 @@ class ScoreBoard(Main):
                 self.score_array = json.load(file)
                 self.score_array = sorted(self.score_array,key=lambda x:x[1],reverse=True)
 
-        print(self.score_array)
     def save(self):
         with open('data/score','w') as outfile:
             json.dump(self.score_array,outfile)
