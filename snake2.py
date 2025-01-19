@@ -1,12 +1,13 @@
 import pygame
-import sys,random,os,json
+import sys,random,os,json,math
 pygame.init()
 
 SCREEN_WIDTH = pygame.display.Info().current_w
 SCREEN_HEIGHT = pygame.display.Info().current_h
-DEFAULT_WINDOW_WIDTH = 1280//2
-DEFAULT_WINDOW_HEIGHT = 720//2
-SNAKE_SIZE = (20,20)
+DEFAULT_WINDOW_WIDTH = 1280
+DEFAULT_WINDOW_HEIGHT = 720
+SNAKE_SIZE = 20
+SNAKE_TUPLE = (SNAKE_SIZE,SNAKE_SIZE)
 FPS = 5
 
 BLACK = 'black'
@@ -15,23 +16,23 @@ WHITE = 'white'
 GREEN = 'green'
 YELLOW = 'yellow'
 
-class Main(pygame.sprite.Sprite):
+class Main:
     def __init__(self):
         super().__init__()
         self.fps = FPS
         self.clock = pygame.time.Clock()
-        self.fullscreen = False
         self.window_width = DEFAULT_WINDOW_WIDTH
         self.window_height = DEFAULT_WINDOW_HEIGHT
-        self.last_size = (self.window_width,self.window_height)
         self.window_width_center = self.window_width // 2
         self.window_height_center = self.window_height // 2
-        self.surface = pygame.display.set_mode((self.window_width,self.window_height),pygame.WINDOWMAXIMIZED)
+        self.surface = pygame.display.set_mode((DEFAULT_WINDOW_WIDTH,DEFAULT_WINDOW_HEIGHT),pygame.SCALED)
         pygame.display.set_caption('Snake')
         self.font_title = pygame.font.Font('fonts/arcadeclassic.ttf',80)
+        self.font_subtitle = pygame.font.Font('fonts/arcadeclassic.ttf',60)
         self.font_title_outline = pygame.font.Font('fonts/arcadeclassic.ttf',86)
         self.font_score = pygame.font.Font('fonts/arcadeclassic.ttf',40)
         self.running = True
+        self.fullscreen = False
         
 
     def run(self):
@@ -42,7 +43,7 @@ class Main(pygame.sprite.Sprite):
             self.events()
             self.screen()
             
-            pygame.display.update()
+            pygame.display.flip()
             self.clock.tick(self.fps)
         self.scoreboard.save()
         pygame.quit()
@@ -50,6 +51,7 @@ class Main(pygame.sprite.Sprite):
 
     def screen(self):
         self.surface.fill(BLUE)
+        pygame.draw.rect(self.surface,WHITE,((0,0),(DEFAULT_WINDOW_WIDTH,DEFAULT_WINDOW_HEIGHT)),1)
         self.randsnake.run(self.window_width,self.window_height)
         self.render_text('SNAKE',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,100))
         self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,100))
@@ -67,57 +69,29 @@ class Main(pygame.sprite.Sprite):
         elif position == 'TOPLEFT':
             text_rect.topleft = coord
         self.surface.blit(text,text_rect)
-
-    def toggle_fullscreen(self):
-        if self.fullscreen:
-            self.fullscreen = False
-            if pygame.display.is_fullscreen() == True:
-                pygame.display.toggle_fullscreen()
-            self.update_video()
-        else:
-            self.fullscreen = True
-            if pygame.display.is_fullscreen() == False:
-                pygame.display.toggle_fullscreen()
-            self.update_video()
-
-    def update_video(self, width = 0, height = 0):
-        if width > 0:
-            if width < DEFAULT_WINDOW_WIDTH or height < DEFAULT_WINDOW_HEIGHT:
-                self.window_width = DEFAULT_WINDOW_WIDTH
-                self.window_height = DEFAULT_WINDOW_HEIGHT 
-            else:
-                self.window_width = width
-                self.window_height = height
-            self.last_size = (self.window_width,self.window_height)
-        if self.fullscreen:
-            self.window_width = SCREEN_WIDTH
-            self.window_height = SCREEN_HEIGHT
-            self.surface = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT),pygame.FULLSCREEN)
-        else:
-            (self.window_width,self.window_height) = self.last_size
-            self.surface = pygame.display.set_mode(self.last_size,pygame.RESIZABLE)
-        pygame.display.update()
-        self.window_width_center = self.window_width//2
-        self.window_height_center = self.window_height//2
         
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.VIDEORESIZE:
-                if not self.fullscreen:
-                    self.update_video(event.w,event.h)
+                pygame.display._resize_event(event)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     self.game = Game(self.surface,self.fullscreen)
                     self.game.run()
+                    self.scoreboard.check_score(self.game.score)
                 if event.key == pygame.K_k:
                     keys = Keys()
                     keys.run()
                 if event.key == pygame.K_q:
                     self.running = False
                 if event.key == pygame.K_f:
-                    self.toggle_fullscreen()
+                    if self.fullscreen == True:
+                        self.fullscreen = False 
+                    else:
+                        self.fullscreen = True
+                    pygame.display.toggle_fullscreen()
 
 class ScoreBoard(Main):
     def __init__(self):
@@ -143,7 +117,60 @@ class ScoreBoard(Main):
         with open('data/score','w') as outfile:
             json.dump(self.score_array,outfile)
             outfile.close()
-    
+
+    def check_score(self,score):
+        print(self.score_array)
+        if not len(self.score_array):
+            self.add_highscore(score)
+        if len(self.score_array)>0:
+            for idx,arr in enumerate(self.score_array):
+                if arr[1]<score:
+                    self.add_highscore(score,idx)
+        print(self.score_array)     
+
+    def add_highscore(self,score,idx=0):
+        name = self.get_name(score)
+        print('name ' + name)
+        self.score_array.insert(idx,[name,score])
+        if len(self.score_array) > 5:
+            self.score_array.pop()
+
+    def get_name(self,score):
+        self.scoreon = True
+        text = []
+        while self.scoreon:
+            self.surface.fill(BLUE)
+            self.render_text('SNAKE',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,100))
+            self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,100))
+            self.render_text('New Score',self.font_title,GREEN,'CENTER',(self.window_width_center,250))
+            for event in pygame.event.get():    
+                if event.type == pygame.KEYDOWN:
+                    print(pygame.key.name(event.key))
+                    key_alpha = pygame.key.name(event.key)
+                    if event.key == pygame.K_RETURN:
+                        self.scoreon = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        if len(text) > 0:
+                            text.pop()
+                    elif event.key == pygame.K_SPACE:
+                        text.append(' ')
+                    elif key_alpha.isalnum():
+                        if len(text)<8:
+                            text.append(key_alpha)                          
+                text_str = ''.join(text)
+                self.render_text(text_str,self.font_title,YELLOW,'CENTER',(self.window_width_center,400))
+                pygame.display.flip()
+        return text_str
+
+
+
+
+
+
+
+
+
+
 class RandSnake(Main):
     def __init__(self):
         super().__init__()
@@ -163,7 +190,7 @@ class RandSnake(Main):
             for snake in range(20):
                 self.x = window_width_center - (20*snake)
                 self.y = window_height_center
-                pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_SIZE))
+                pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_TUPLE))
                 self.memory.append((self.x,self.y))
             self.first_run = False
         else:
@@ -220,11 +247,11 @@ class RandSnake(Main):
                         case 'DOWN':
                             self.y+=20
                     self.count-=1
-                    pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_SIZE))
+                    pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_TUPLE))
                     self.memory[snake] = (self.x,self.y)
                 else:
                     (self.x,self.y) = self.memory[snake]
-                    pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_SIZE))
+                    pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_TUPLE))
 
 class Keys(Main):
     def __init__(self):
@@ -236,45 +263,188 @@ class Keys(Main):
 class Game(Main):
     def __init__(self,surface,fullscreen):
         super().__init__()
+        self.fps = FPS
         self.gameon = True
-        self.snake_size = 20
+        self.snake_size = SNAKE_SIZE
         self.surface = surface
         self.fullscreen = fullscreen
+        self.clock = pygame.time.Clock()
         self.window_width = pygame.display.Info().current_w
         self.window_height = pygame.display.Info().current_h
         self.window_width_center = self.window_width//2
         self.window_height_center = self.window_height//2
-
+        self.x = self.window_width_center
+        self.y = self.window_height_center
+        self.snake_group = pygame.sprite.Group()
+        self.person_group = pygame.sprite.Group()
+        self.direction = ['UP','DOWN','LEFT','RIGHT'][random.randint(0,3)]
+        self.gameover = False
+        self.gamepaused = False
+        self.font_score = pygame.font.Font('fonts/arcadeclassic.ttf',20)
+        self.level = 1
+        self.score = 0
+        self.count_person = 1
 
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.gameon = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    pass
-                if event.key == pygame.K_DOWN:
-                    pass
-                if event.key == pygame.K_LEFT:
-                    pass
-                if event.key == pygame.K_RIGHT:
-                    pass
-                if event.key == pygame.K_q:
-                    self.gameon = False
-    
+                if self.gameover:
+                    if event.key == pygame.K_RETURN:
+                        self.gameon = False
+                elif self.gamepaused:
+                    if event.key == pygame.K_ESCAPE:
+                        self.gamepaused = False
+                    if event.key == pygame.K_q:
+                        self.gamepaused = False
+                        self.gameon = False
+                else:
+                    if event.key == pygame.K_ESCAPE:
+                        self.game_paused()
+                    if self.direction in ['LEFT','RIGHT']:
+                        if event.key == pygame.K_UP:
+                            self.direction = 'UP'
+                        if event.key == pygame.K_DOWN:
+                            self.direction = 'DOWN'
+                    else:
+                        if event.key == pygame.K_LEFT:
+                            self.direction = 'LEFT'
+                        if event.key == pygame.K_RIGHT:
+                            self.direction = 'RIGHT'
+                    
     def screen(self):
         self.surface.fill(BLUE)
-        if self.fullscreen:
-            self.board = pygame.draw.rect(self.surface,YELLOW,((self.window_width_center - 620,self.window_height_center - 300),(1240,600)),1)
-        else:
-            self.board = pygame.draw.rect(self.surface,YELLOW,((20,100),(self.window_width-40,self.window_height-120)),1)
+        self.board = pygame.draw.rect(self.surface,YELLOW,((20,100),(DEFAULT_WINDOW_WIDTH-40,DEFAULT_WINDOW_HEIGHT-120)),1)
+        self.render_text('SNAKE',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,60))
+        self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,60))
 
+    def move_snake(self):
+        # print((self.x,self.y))
+        match self.direction:
+            case 'UP':
+                self.y -= SNAKE_SIZE
+            case 'DOWN':
+                self.y += SNAKE_SIZE
+            case 'LEFT':
+                self.x -= SNAKE_SIZE
+            case 'RIGHT':
+                self.x += SNAKE_SIZE
+
+        self.person_group.update()
+        self.person_group.draw(self.surface)
+        for idx,snake in enumerate(self.snake_group):
+            if idx == 0:
+                previous_x = snake.x
+                previous_y = snake.y
+                snake.update(self.x,self.y)
+            else:
+                x = previous_x
+                y = previous_y
+                previous_x = snake.x
+                previous_y = snake.y
+                snake.update(x,y)
+        self.snake_group.draw(self.surface)
+
+    def check_collisions(self):
+        for snake in self.snake_group:
+            if pygame.sprite.spritecollide(snake,self.person_group,True):
+                new_person = Person()
+                self.person_group.add(new_person)
+                new_snake = Snake(self.x,self.y)
+                self.snake_group.add(new_snake)
+                self.count_person += 1
+                self.score += 5*self.level
+                if self.count_person == 5:
+                    self.level +=1
+                    self.count_person = 0
+                    self.fps += 1
+
+            if pygame.sprite.spritecollide(snake,self.snake_group,False):
+                collider = pygame.sprite.spritecollide(snake,self.snake_group,False)[0]
+                # print(collider)
+                if collider!=snake:
+                    self.game_over('snake')
+
+            if snake.x in [0,DEFAULT_WINDOW_WIDTH - 20] or snake.y in [80,DEFAULT_WINDOW_HEIGHT - 20]:
+                self.game_over('wall')
+
+    def game_over(self,reason):
+        self.gameover = True
+        self.render_text('GAME   OVER',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,200))
+        self.render_text('GAME   OVER',self.font_title,GREEN,'CENTER',(self.window_width_center,200))
+        if reason == 'wall':
+            self.render_text('You   crashed  against   the   wall',self.font_title,GREEN,'CENTER',(self.window_width_center,280))
+        if reason == 'snake':
+            self.render_text('You   crashed  against   yourself',self.font_title,GREEN,'CENTER',(self.window_width_center,280))
+        self.render_text('Press   Enter   to   continue',self.font_subtitle,GREEN,'CENTER',(self.window_width_center,480))
+
+        pygame.display.flip()
+        while self.gameon:
+            self.events()
+
+    def game_paused(self):
+        self.gamepaused = True
+        self.render_text('GAME   PAUSED',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,200))
+        self.render_text('GAME   PAUSED',self.font_title,GREEN,'CENTER',(self.window_width_center,200))
+        self.render_text('Press   ESC   to   continue',self.font_subtitle,GREEN,'CENTER',(self.window_width_center,480))
+        self.render_text('Press   Q   to   quit',self.font_subtitle,GREEN,'CENTER',(self.window_width_center,400))
+        pygame.display.flip()
+        while self.gamepaused:
+            self.events()
+
+    def update_score(self):
+        text_level = 'Level  {}'.format(self.level)
+        text_score = 'Score  {}'.format(self.score)
+        self.render_text(text_level,self.font_score,YELLOW,'TOPLEFT',(20,80))
+        self.render_text(text_score,self.font_score,YELLOW,'TOPLEFT',(DEFAULT_WINDOW_WIDTH - 150,80))
     
     def run(self):
+        print(self.fullscreen)
+        if self.fullscreen:
+            pygame.display.toggle_fullscreen()
+        self.snake = Snake(self.x,self.y)
+        self.snake_group.add(self.snake)
+        self.person = Person()
+        self.person_group.add(self.person)
+        
         while self.gameon:
-            self.screen()
             self.events()
+            self.screen()
+            self.move_snake()
+            self.check_collisions()
+            self.update_score()
             pygame.display.flip()
+            self.clock.tick(self.fps)
+        
+
+class Snake(pygame.sprite.Sprite,Game):
+    def __init__(self,x,y):
+        super().__init__()
+        self.image = pygame.image.load('picture/snake_round.png')
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x,y)
+        self.x = x
+        self.y = y
+    
+    def update(self,x,y):
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
+
+        
+
+class Person(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load('picture/person2.png')
+        self.rect = self.image.get_rect()
+        self.width_floor = (DEFAULT_WINDOW_WIDTH-40)//20
+        self.height_floor = (DEFAULT_WINDOW_HEIGHT-140)//20
+        self.x = random.randint(2,self.width_floor)*20
+        self.y = random.randint(6,self.height_floor)*20
+        self.rect.topleft = (self.x,self.y)
 
 
 if __name__== '__main__':
