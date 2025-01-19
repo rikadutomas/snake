@@ -33,12 +33,16 @@ class Main:
         self.font_score = pygame.font.Font('fonts/arcadeclassic.ttf',40)
         self.running = True
         self.fullscreen = False
+        self.music = pygame.mixer.music
+        self.music.load('sounds/game_music2.mp3')
+        self.music.set_volume(0.4)
         
 
     def run(self):
         self.randsnake = RandSnake()
         self.scoreboard = ScoreBoard()
         self.scoreboard.load()
+        self.music.play(-1,0.0)
         while self.running:
             self.events()
             self.screen()
@@ -78,9 +82,12 @@ class Main:
                 pygame.display._resize_event(event)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
+                    self.music.stop()
                     self.game = Game(self.surface,self.fullscreen)
                     self.game.run()
                     self.scoreboard.check_score(self.game.score)
+                    self.scoreboard.save()
+                    self.music.play()
                 if event.key == pygame.K_k:
                     keys = Keys()
                     keys.run()
@@ -97,6 +104,7 @@ class ScoreBoard(Main):
     def __init__(self):
         super().__init__()
         self.score_array = []
+        self.sound_typing = pygame.mixer.Sound('sounds/typing2.mp3')
     
     def show(self,width_center):
         x_user = width_center - 170
@@ -120,12 +128,14 @@ class ScoreBoard(Main):
 
     def check_score(self,score):
         print(self.score_array)
-        if not len(self.score_array):
+        n_scores = len(self.score_array)
+        if not n_scores or n_scores<5:
             self.add_highscore(score)
-        if len(self.score_array)>0:
+        else:
             for idx,arr in enumerate(self.score_array):
                 if arr[1]<score:
                     self.add_highscore(score,idx)
+                    break
         print(self.score_array)     
 
     def add_highscore(self,score,idx=0):
@@ -134,6 +144,8 @@ class ScoreBoard(Main):
         self.score_array.insert(idx,[name,score])
         if len(self.score_array) > 5:
             self.score_array.pop()
+        print(self.score_array)
+        self.score_array = sorted(self.score_array,key=lambda x:x[1],reverse=True)
 
     def get_name(self,score):
         self.scoreon = True
@@ -145,7 +157,7 @@ class ScoreBoard(Main):
             self.render_text('New Score',self.font_title,GREEN,'CENTER',(self.window_width_center,250))
             for event in pygame.event.get():    
                 if event.type == pygame.KEYDOWN:
-                    print(pygame.key.name(event.key))
+                    self.sound_typing.play()
                     key_alpha = pygame.key.name(event.key)
                     if event.key == pygame.K_RETURN:
                         self.scoreon = False
@@ -161,15 +173,6 @@ class ScoreBoard(Main):
                 self.render_text(text_str,self.font_title,YELLOW,'CENTER',(self.window_width_center,400))
                 pygame.display.flip()
         return text_str
-
-
-
-
-
-
-
-
-
 
 class RandSnake(Main):
     def __init__(self):
@@ -281,6 +284,12 @@ class Game(Main):
         self.gameover = False
         self.gamepaused = False
         self.font_score = pygame.font.Font('fonts/arcadeclassic.ttf',20)
+        self.music = pygame.mixer.music
+        self.music.load('sounds/game_music.mp3')
+        self.music.set_volume(0.4)
+        self.sound_game_over = pygame.mixer.Sound('sounds/game-over.mp3')
+        self.sound_get_person = pygame.mixer.Sound('sounds/get_person.mp3')
+        self.sound_next_level = pygame.mixer.Sound('sounds/next_level.mp3')
         self.level = 1
         self.score = 0
         self.count_person = 1
@@ -353,12 +362,14 @@ class Game(Main):
                 self.person_group.add(new_person)
                 new_snake = Snake(self.x,self.y)
                 self.snake_group.add(new_snake)
+                self.sound_get_person.play()
                 self.count_person += 1
                 self.score += 5*self.level
                 if self.count_person == 5:
                     self.level +=1
                     self.count_person = 0
                     self.fps += 1
+                    self.sound_next_level.play()
 
             if pygame.sprite.spritecollide(snake,self.snake_group,False):
                 collider = pygame.sprite.spritecollide(snake,self.snake_group,False)[0]
@@ -371,6 +382,8 @@ class Game(Main):
 
     def game_over(self,reason):
         self.gameover = True
+        self.music.stop()
+        self.sound_game_over.play()
         self.render_text('GAME   OVER',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,200))
         self.render_text('GAME   OVER',self.font_title,GREEN,'CENTER',(self.window_width_center,200))
         if reason == 'wall':
@@ -407,6 +420,7 @@ class Game(Main):
         self.snake_group.add(self.snake)
         self.person = Person()
         self.person_group.add(self.person)
+        self.music.play()
         
         while self.gameon:
             self.events()
