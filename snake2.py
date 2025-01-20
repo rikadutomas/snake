@@ -46,7 +46,6 @@ class Main:
         while self.running:
             self.events()
             self.screen()
-            
             pygame.display.flip()
             self.clock.tick(self.fps)
         self.scoreboard.save()
@@ -258,10 +257,57 @@ class RandSnake(Main):
 
 class Keys(Main):
     def __init__(self):
-        pass
+        super().__init__()
+        self.positions = [250,350,450,550]
+        self.keys = ['','','','']
+        self.count = -1
+        self.close_message = ''
+    def events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.keyson = False
+                elif event.key == pygame.K_BACKSPACE:
+                    self.keys[self.count] = ''
+                    self.count -= 1
+                elif event.key == pygame.K_RETURN:
+                    if self.count == 3:
+                        self.save_keys()
+                        self.keyson = False
+                    else:
+                        self.count += 1
+                        self.keys[self.count] = pygame.key.name(event.key)
+                else:
+                    self.count += 1
+                    self.keys[self.count] = pygame.key.name(event.key)        
+        if self.count == 3 and self.keyson:
+            self.close_message = 'Press Enter to Save or Esc to exit'
+
+    def save_keys(self):
+        print('keys Saved')
+
+    def screen(self):
+        self.surface.fill(BLUE)
+        self.render_text('SNAKE',self.font_title_outline,BLACK,'CENTER',(self.window_width_center,100))
+        self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,100))
+        self.render_text('Press the key to select',self.font_score,GREEN,'CENTER',(self.window_width_center,170))
+        self.render_text('UP',self.font_score,GREEN,'TOPLEFT',(300,250))
+        self.render_text(self.keys[0],self.font_score,YELLOW,'TOPLEFT',(500,250))
+        self.render_text('DOWN',self.font_score,GREEN,'TOPLEFT',(300,350))
+        self.render_text(self.keys[1],self.font_score,YELLOW,'TOPLEFT',(500,350))
+        self.render_text('LEFT',self.font_score,GREEN,'TOPLEFT',(300,450))
+        self.render_text(self.keys[2],self.font_score,YELLOW,'TOPLEFT',(500,450))
+        self.render_text('RIGHT',self.font_score,GREEN,'TOPLEFT',(300,550))
+        self.render_text(self.keys[3],self.font_score,YELLOW,'TOPLEFT',(500,550))
+        self.render_text(self.close_message,self.font_score,YELLOW,'CENTER',(self.window_width_center,650))
+
 
     def run(self):
-        print('Keys Screen')
+        self.keyson = True
+        while self.keyson:
+            self.events()
+            self.screen()
+            pygame.display.flip()
 
 class Game(Main):
     def __init__(self,surface,fullscreen):
@@ -446,8 +492,6 @@ class Snake(pygame.sprite.Sprite,Game):
         self.y = y
         self.rect.x = x
         self.rect.y = y
-
-        
 
 class Person(pygame.sprite.Sprite):
     def __init__(self):
