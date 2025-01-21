@@ -1,3 +1,4 @@
+# import required library. May use requirements.txt
 import pygame
 import sys,random,os,json,math
 pygame.init()
@@ -45,7 +46,6 @@ class Main:
         self.music.set_volume(0.4)
         self.game_keys = DEFAULT_KEYS
         
-
     def run(self):
         self.randsnake = RandSnake()
         self.scoreboard = ScoreBoard()
@@ -68,9 +68,6 @@ class Main:
                     self.game_keys = json.load(file)
                 except:
                     self.game_keys = DEFAULT_KEYS
-
-        print(self.game_keys)
-        # return self.game_keys
 
     def screen(self):
         self.surface.fill(BLUE)
@@ -110,7 +107,6 @@ class Main:
                 if event.key == pygame.K_k:
                     self.keysboard = Keys()
                     self.game_keys = self.keysboard.run()
-                    print(self.game_keys)
                 if event.key == pygame.K_q:
                     self.running = False
                 if event.key == pygame.K_f:
@@ -120,6 +116,7 @@ class Main:
                         self.fullscreen = True
                     pygame.display.toggle_fullscreen()
 
+# manages the scoreboard information
 class ScoreBoard(Main):
     def __init__(self):
         super().__init__()
@@ -147,7 +144,6 @@ class ScoreBoard(Main):
             outfile.close()
 
     def check_score(self,score):
-        print(self.score_array)
         n_scores = len(self.score_array)
         if not n_scores or n_scores<5:
             self.add_highscore(score)
@@ -155,16 +151,13 @@ class ScoreBoard(Main):
             for idx,arr in enumerate(self.score_array):
                 if arr[1]<score:
                     self.add_highscore(score,idx)
-                    break
-        print(self.score_array)     
+                    break    
 
     def add_highscore(self,score,idx=0):
         name = self.get_name(score)
-        print('name ' + name)
         self.score_array.insert(idx,[name,score])
         if len(self.score_array) > 5:
             self.score_array.pop()
-        print(self.score_array)
         self.score_array = sorted(self.score_array,key=lambda x:x[1],reverse=True)
 
     def get_name(self,score):
@@ -194,6 +187,7 @@ class ScoreBoard(Main):
                 pygame.display.flip()
         return text_str
 
+# builds the random snake in the initial screen
 class RandSnake(Main):
     def __init__(self):
         super().__init__()
@@ -226,8 +220,7 @@ class RandSnake(Main):
                         if self.direction in ['LEFT','RIGHT']:
                                 self.direction = ['UP','DOWN'][idx]
                         else:
-                            self.direction = ['LEFT','RIGHT'][idx]
-                        
+                            self.direction = ['LEFT','RIGHT'][idx] 
                     if self.collision !='':
                         self.direction = self.collision
                         self.collision = ''
@@ -256,10 +249,8 @@ class RandSnake(Main):
                                 self.direction = 'RIGHT'
                             else:
                                 self.direction = 'LEFT'
-
                     for idx in range(len(self.memory)-1,-1,-1):
                         self.memory[idx] = self.memory[idx-1]
-
                     match self.direction:
                         case 'LEFT':
                             self.x-=20
@@ -276,6 +267,7 @@ class RandSnake(Main):
                     (self.x,self.y) = self.memory[snake]
                     pygame.draw.rect(self.surface,self.color,((self.x,self.y),SNAKE_TUPLE))
 
+# manages the keyboard configuration and gui
 class Keys(Main):
     def __init__(self):
         super().__init__()
@@ -315,7 +307,6 @@ class Keys(Main):
             "LEFT":self.keycode[2],
             "RIGHT":self.keycode[3]
         }
-        print(self.game_keys)
         with open('data/config','w') as outfile:
             json.dump(self.game_keys,outfile)
             outfile.close()
@@ -336,7 +327,6 @@ class Keys(Main):
         self.render_text(self.keys[3],self.font_score,YELLOW,'TOPLEFT',(500,550))
         self.render_text(self.close_message,self.font_score,YELLOW,'CENTER',(self.window_width_center,650))
 
-
     def run(self):
         self.keyson = True
         while self.keyson:
@@ -345,6 +335,7 @@ class Keys(Main):
             pygame.display.flip()
         return self.game_keys
 
+# builds the game screen
 class Game(Main):
     def __init__(self,surface,fullscreen,game_keys):
         super().__init__()
@@ -412,7 +403,6 @@ class Game(Main):
         self.render_text('SNAKE',self.font_title,GREEN,'CENTER',(self.window_width_center,60))
 
     def move_snake(self):
-        # print((self.x,self.y))
         match self.direction:
             case 'UP':
                 self.y -= SNAKE_SIZE
@@ -422,7 +412,6 @@ class Game(Main):
                 self.x -= SNAKE_SIZE
             case 'RIGHT':
                 self.x += SNAKE_SIZE
-
         self.person_group.update()
         self.person_group.draw(self.surface)
         for idx,snake in enumerate(self.snake_group):
@@ -453,13 +442,10 @@ class Game(Main):
                     self.count_person = 0
                     self.fps += 1
                     self.sound_next_level.play()
-
             if pygame.sprite.spritecollide(snake,self.snake_group,False):
                 collider = pygame.sprite.spritecollide(snake,self.snake_group,False)[0]
-                # print(collider)
                 if collider!=snake:
                     self.game_over('snake')
-
             if snake.x in [0,DEFAULT_WINDOW_WIDTH - 20] or snake.y in [80,DEFAULT_WINDOW_HEIGHT - 20]:
                 self.game_over('wall')
 
@@ -474,7 +460,6 @@ class Game(Main):
         if reason == 'snake':
             self.render_text('You   crashed  against   yourself',self.font_title,GREEN,'CENTER',(self.window_width_center,280))
         self.render_text('Press   Enter   to   continue',self.font_subtitle,GREEN,'CENTER',(self.window_width_center,480))
-
         pygame.display.flip()
         while self.gameon:
             self.events()
@@ -496,7 +481,6 @@ class Game(Main):
         self.render_text(text_score,self.font_score,YELLOW,'TOPLEFT',(DEFAULT_WINDOW_WIDTH - 150,80))
     
     def run(self):
-        print(self.fullscreen)
         if self.fullscreen:
             pygame.display.toggle_fullscreen()
         self.snake = Snake(self.x,self.y)
@@ -504,7 +488,6 @@ class Game(Main):
         self.person = Person()
         self.person_group.add(self.person)
         self.music.play()
-        print(self.game_keys)
         while self.gameon:
             self.events()
             self.screen()
@@ -513,8 +496,7 @@ class Game(Main):
             self.update_score()
             pygame.display.flip()
             self.clock.tick(self.fps)
-        
-
+            
 class Snake(pygame.sprite.Sprite,Game):
     def __init__(self,x,y):
         super().__init__()
@@ -540,7 +522,6 @@ class Person(pygame.sprite.Sprite):
         self.x = random.randint(2,self.width_floor)*20
         self.y = random.randint(6,self.height_floor)*20
         self.rect.topleft = (self.x,self.y)
-
 
 if __name__== '__main__':
     main = Main()
