@@ -1,4 +1,4 @@
-**SNKAE**
+**SNAKE**
 
 INTRO
 
