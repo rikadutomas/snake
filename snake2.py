@@ -16,6 +16,13 @@ WHITE = 'white'
 GREEN = 'green'
 YELLOW = 'yellow'
 
+DEFAULT_KEYS = {
+     "UP":1073741906,
+     "DOWN":1073741905,
+     "LEFT":1073741904,
+     "RIGHT":1073741903
+}
+
 class Main:
     def __init__(self):
         super().__init__()
@@ -36,12 +43,14 @@ class Main:
         self.music = pygame.mixer.music
         self.music.load('sounds/game_music2.mp3')
         self.music.set_volume(0.4)
+        self.game_keys = DEFAULT_KEYS
         
 
     def run(self):
         self.randsnake = RandSnake()
         self.scoreboard = ScoreBoard()
         self.scoreboard.load()
+        self.load_keys()
         self.music.play(-1,0.0)
         while self.running:
             self.events()
@@ -51,6 +60,17 @@ class Main:
         self.scoreboard.save()
         pygame.quit()
         sys.exit()
+
+    def load_keys(self):  
+        if os.path.isfile('data/config'):
+            with open('data/config', 'r') as file:
+                try:
+                    self.game_keys = json.load(file)
+                except:
+                    self.game_keys = DEFAULT_KEYS
+
+        print(self.game_keys)
+        # return self.game_keys
 
     def screen(self):
         self.surface.fill(BLUE)
@@ -82,14 +102,15 @@ class Main:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     self.music.stop()
-                    self.game = Game(self.surface,self.fullscreen)
+                    self.game = Game(self.surface,self.fullscreen,self.game_keys)
                     self.game.run()
                     self.scoreboard.check_score(self.game.score)
                     self.scoreboard.save()
                     self.music.play()
                 if event.key == pygame.K_k:
-                    keys = Keys()
-                    keys.run()
+                    self.keysboard = Keys()
+                    self.game_keys = self.keysboard.run()
+                    print(self.game_keys)
                 if event.key == pygame.K_q:
                     self.running = False
                 if event.key == pygame.K_f:
@@ -260,6 +281,7 @@ class Keys(Main):
         super().__init__()
         self.positions = [250,350,450,550]
         self.keys = ['','','','']
+        self.keycode = [0,0,0,0]
         self.count = -1
         self.close_message = ''
     def events(self):
@@ -269,22 +291,35 @@ class Keys(Main):
                     self.keyson = False
                 elif event.key == pygame.K_BACKSPACE:
                     self.keys[self.count] = ''
+                    self.keycode[self.count] = 0
                     self.count -= 1
                 elif event.key == pygame.K_RETURN:
                     if self.count == 3:
-                        self.save_keys()
+                        self.game_keys = self.save_keys()
                         self.keyson = False
                     else:
                         self.count += 1
                         self.keys[self.count] = pygame.key.name(event.key)
+                        self.keycode[self.count] = event.key
                 else:
                     self.count += 1
-                    self.keys[self.count] = pygame.key.name(event.key)        
+                    self.keys[self.count] = pygame.key.name(event.key)
+                    self.keycode[self.count] = event.key        
         if self.count == 3 and self.keyson:
             self.close_message = 'Press Enter to Save or Esc to exit'
 
     def save_keys(self):
-        print('keys Saved')
+        self.game_keys = {
+            "UP":self.keycode[0],
+            "DOWN":self.keycode[1],
+            "LEFT":self.keycode[2],
+            "RIGHT":self.keycode[3]
+        }
+        print(self.game_keys)
+        with open('data/config','w') as outfile:
+            json.dump(self.game_keys,outfile)
+            outfile.close()
+        return self.game_keys
 
     def screen(self):
         self.surface.fill(BLUE)
@@ -308,9 +343,10 @@ class Keys(Main):
             self.events()
             self.screen()
             pygame.display.flip()
+        return self.game_keys
 
 class Game(Main):
-    def __init__(self,surface,fullscreen):
+    def __init__(self,surface,fullscreen,game_keys):
         super().__init__()
         self.fps = FPS
         self.gameon = True
@@ -339,6 +375,7 @@ class Game(Main):
         self.level = 1
         self.score = 0
         self.count_person = 1
+        self.game_keys = game_keys
 
     def events(self):
         for event in pygame.event.get():
@@ -358,14 +395,14 @@ class Game(Main):
                     if event.key == pygame.K_ESCAPE:
                         self.game_paused()
                     if self.direction in ['LEFT','RIGHT']:
-                        if event.key == pygame.K_UP:
+                        if event.key == self.game_keys['UP']:
                             self.direction = 'UP'
-                        if event.key == pygame.K_DOWN:
+                        if event.key == self.game_keys['DOWN']:
                             self.direction = 'DOWN'
-                    else:
-                        if event.key == pygame.K_LEFT:
+                    if self.direction in ['UP','DOWN']:
+                        if event.key == self.game_keys['LEFT']:
                             self.direction = 'LEFT'
-                        if event.key == pygame.K_RIGHT:
+                        if event.key == self.game_keys['RIGHT']:
                             self.direction = 'RIGHT'
                     
     def screen(self):
@@ -467,7 +504,7 @@ class Game(Main):
         self.person = Person()
         self.person_group.add(self.person)
         self.music.play()
-        
+        print(self.game_keys)
         while self.gameon:
             self.events()
             self.screen()
